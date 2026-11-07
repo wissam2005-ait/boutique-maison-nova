@@ -24,11 +24,16 @@ export type Order = {
 
 type Backend = { read<T>(key: string): Promise<T | null>; write(key: string, value: unknown): Promise<void> };
 
-const onNetlify = Boolean(process.env.NETLIFY || process.env.NETLIFY_BLOBS_CONTEXT);
-
-async function netlifyBackend(): Promise<Backend> {
+/** Netlify Blobs si le contexte Netlify est disponible (production), sinon null. */
+async function netlifyBackend(): Promise<Backend | null> {
   const { getStore } = await import("@netlify/blobs");
-  const store = getStore({ name: "boutique", consistency: "strong" });
+  let store: ReturnType<typeof getStore>;
+  try {
+    // Le contexte Blobs est injecté par Netlify à l'exécution (variable ou globalThis).
+    store = getStore({ name: "boutique", consistency: "strong" });
+  } catch {
+    return null; // hors Netlify (développement local)
+  }
   return {
     read: async <T,>(key: string) => ((await store.get(key, { type: "json" })) as T | null) ?? null,
     write: async (key, value) => {
@@ -52,10 +57,14 @@ const fileBackend: Backend = {
   },
 };
 
-let backendPromise: Promise<Backend> | null = null;
-function backend() {
-  backendPromise ??= onNetlify ? netlifyBackend() : Promise.resolve(fileBackend);
-  return backendPromise;
+// Résolu à chaque appel : sur Netlify, le contexte peut être fourni par requête.
+async function backend(): Promise<Backend> {
+  const netlify = await netlifyBackend();
+  if (netlify) return netlify;
+  if (process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    throw new Error("Netlify Blobs indisponible : le contexte de stockage n'a pas été fourni par Netlify.");
+  }
+  return fileBackend;
 }
 
 /* ------------------------------ Produits ------------------------------ */
@@ -64,7 +73,11 @@ export async function getProducts(): Promise<Product[]> {
   const b = await backend();
   const list = await b.read<Product[]>("products");
   if (list) return list;
-  await b.write("products", seedProducts); // premier lancement : catalogue de démonstration
+  try {
+    await b.write("products", seedProducts); // premier lancement : catalogue de démonstration
+  } catch (e) {
+    console.error("Impossible d'enregistrer le catalogue initial", e);
+  }
   return seedProducts;
 }
 
@@ -111,4 +124,17 @@ export async function setOrderStatus(id: string, status: OrderStatus) {
   const o = orders.find((x) => x.id === id);
   if (o) o.status = status;
   await (await backend()).write("orders", orders);
+}
+
+/** Diagnostic du stockage (utilisé par /api/sante). */
+export async function storageHealth() {
+  try {
+    const b = await backend();
+    const kind = b === fileBackend ? "fichiers locaux" : "Netlify Blobs";
+    await b.write("healthcheck", { at: new Date().toISOString() });
+    const read = await b.read<{ at: string }>("healthcheck");
+    return { ok: Boolean(read), stockage: kind };
+  } catch (e) {
+    return { ok: false, erreur: e instanceof Error ? e.message : String(e) };
+  }
 }
