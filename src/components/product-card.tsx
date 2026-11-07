@@ -23,7 +23,7 @@ export function ProductCard({ product }: { product: Product }) {
           </span>
         )}
         <div className="absolute bottom-3 right-3 translate-y-2 opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100 max-md:translate-y-0 max-md:opacity-100">
-          <AddToCartButton slug={product.slug} disabled={soldOut} compact />
+          <AddToCartButton product={product} disabled={soldOut} compact />
         </div>
       </div>
       <div className="mt-4 space-y-1">

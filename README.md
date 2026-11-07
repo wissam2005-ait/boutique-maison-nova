@@ -4,53 +4,48 @@ Boutique en ligne moderne construite avec **Next.js 16 (App Router, React 19, Se
 
 ## Fonctionnalités
 
-- Page d'accueil avec hero, catégories, coups de cœur, newsletter (code promo) et avis clients
-- Boutique avec filtres par catégorie, recherche, tri et filtre « en stock »
-- Fiches produit pré-générées en statique (SEO + Open Graph) avec sélection de quantité et produits associés
-- Panier latéral animé + page panier, sauvegardé dans le navigateur, avec barre de progression vers la livraison offerte
-- Tunnel de commande : validation, code promo `BIENVENUE10`, **prix recalculés côté serveur** (impossible de les modifier depuis le navigateur)
-- Pages À propos, Contact et 404, responsive mobile, accessible
+**Boutique**
+- Accueil, boutique (filtres, recherche, tri), fiches produit, panier latéral, pages À propos / Contact / 404
+- Commande traitée **côté serveur** : prix et stocks relus en base (impossibles à falsifier), stock décrémenté automatiquement
+- Code promo `BIENVENUE10`, livraison offerte dès 80 €
+
+**Administration (`/admin`)** — protégée par mot de passe
+- Tableau de bord : chiffre d'affaires, nombre de commandes, panier moyen, alertes de stock faible
+- Liste des commandes avec détail client et suivi du statut (nouvelle → expédiée → livrée / annulée)
+- Ajouter, modifier, supprimer des produits (prix, prix barré, stock, image, badge, coup de cœur…)
+
+**Base de données**
+- En production sur Netlify : **Netlify Blobs** (gratuit, rien à configurer)
+- En local : fichiers JSON dans `.data/`
+- Au premier lancement, le catalogue de démonstration est créé automatiquement
 
 ## Démarrer en local
 
 ```bash
 npm install
-npm run dev
+ADMIN_PASSWORD=monmotdepasse npm run dev
 ```
 
-Ouvrez http://localhost:3000
+Boutique : http://localhost:3000 — Admin : http://localhost:3000/admin
+
+## Variables d'environnement
+
+| Variable | Rôle |
+|---|---|
+| `ADMIN_PASSWORD` | **Obligatoire** pour activer l'espace `/admin` |
+| `ORDER_WEBHOOK_URL` | Optionnel : reçoit chaque commande en JSON (Formspree pour un e‑mail, webhook Discord, Make/Zapier…) |
+
+## Déployer gratuitement sur Netlify
+
+1. Importez le dépôt GitHub sur [app.netlify.com](https://app.netlify.com) (tout est déjà configuré dans `netlify.toml`).
+2. *Configuration du projet → Variables d'environnement* : ajoutez `ADMIN_PASSWORD`.
+3. *Déploie → Trigger deploy*.
 
 ## Personnaliser
 
 | Quoi | Fichier |
 |---|---|
-| Nom, devise, seuil de livraison offerte, e‑mail | `src/lib/config.ts` |
-| Produits et catégories | `src/lib/products.ts` |
+| Nom, devise, livraison offerte, e‑mail | `src/lib/config.ts` |
+| Catégories et catalogue de démonstration | `src/lib/products.ts` |
 | Codes promo | `src/lib/promo.ts` |
 | Couleurs et polices | `src/app/globals.css`, `src/app/layout.tsx` |
-
-Pour vos propres photos : placez-les dans `public/produits/` et indiquez `image: "/produits/mon-image.jpg"`.
-
-## Recevoir les commandes
-
-Le site est 100 % statique (dossier `out/`). Pour recevoir chaque commande **par e‑mail gratuitement**, créez un formulaire sur [formspree.io](https://formspree.io), puis ajoutez la variable d'environnement :
-
-```
-NEXT_PUBLIC_ORDER_WEBHOOK_URL=https://formspree.io/f/xxxxxxx
-```
-
-Ça marche aussi avec une URL de webhook Discord, Make ou Zapier (Google Sheets).
-
-## Déployer gratuitement sur Vercel
-
-1. Poussez ce dossier sur un dépôt GitHub.
-2. Sur [vercel.com/new](https://vercel.com/new), importez le dépôt, puis cliquez sur **Deploy** (aucune configuration nécessaire).
-3. (Optionnel) Ajoutez `NEXT_PUBLIC_ORDER_WEBHOOK_URL` dans *Settings → Environment Variables*.
-
-Netlify et Cloudflare Pages fonctionnent aussi.
-
-## Pistes suivantes
-
-- Paiement par carte : Stripe Checkout
-- Base de données des commandes et produits : Neon Postgres ou Supabase (offres gratuites)
-- Back-office : Sanity ou Payload CMS

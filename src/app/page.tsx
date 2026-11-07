@@ -1,15 +1,21 @@
 import Link from "next/link";
 import { ArrowRight, Leaf, RotateCcw, ShieldCheck, Truck } from "lucide-react";
-import { categories, products } from "@/lib/products";
+import { connection } from "next/server";
+import { categories } from "@/lib/products";
+import { getProducts } from "@/lib/db";
 import { ProductCard } from "@/components/product-card";
 import { ProductImage } from "@/components/product-image";
 import { Newsletter } from "@/components/newsletter";
 import { formatPrice, siteConfig } from "@/lib/config";
 
-export default function Home() {
-  const featured = products.filter((p) => p.featured);
-  const hero = products[0];
-  const heroSecond = products[5];
+export default async function Home() {
+  await connection();
+  const products = await getProducts();
+  const featuredList = products.filter((p) => p.featured);
+  const featured = featuredList.length ? featuredList : products;
+  const hero = featured[0];
+  const heroSecond = featured[1] ?? hero;
+  const minPrice = products.length ? Math.min(...products.map((p) => p.price)) : 0;
 
   return (
     <>
@@ -28,9 +34,9 @@ export default function Home() {
               <Link href="/boutique" className="inline-flex h-12 items-center gap-2 rounded-full bg-stone-900 px-7 font-medium text-white transition hover:bg-stone-700">
                 Explorer la boutique <ArrowRight className="size-4" />
               </Link>
-              <Link href={`/produit/${hero.slug}`} className="inline-flex h-12 items-center rounded-full border border-stone-300 bg-white px-7 font-medium transition hover:border-stone-900">
+              {hero && <Link href={`/produit/${hero.slug}`} className="inline-flex h-12 items-center rounded-full border border-stone-300 bg-white px-7 font-medium transition hover:border-stone-900">
                 Produit phare
-              </Link>
+              </Link>}
             </div>
             <dl className="mt-12 flex gap-10">
               {[["12k+", "clients heureux"], ["4,8/5", "note moyenne"], ["48 h", "expédition"]].map(([v, l]) => (
@@ -41,6 +47,7 @@ export default function Home() {
               ))}
             </dl>
           </div>
+          {hero && (
           <div className="relative grid grid-cols-5 gap-4">
             <Link href={`/produit/${hero.slug}`} className="group col-span-3">
               <ProductImage product={hero} className="aspect-[3/4] rounded-3xl shadow-xl" />
@@ -51,11 +58,12 @@ export default function Home() {
               </Link>
               <div className="rounded-3xl bg-white p-5 shadow-xl">
                 <p className="text-xs text-stone-500">À partir de</p>
-                <p className="font-serif text-2xl">{formatPrice(35)}</p>
+                <p className="font-serif text-2xl">{formatPrice(minPrice)}</p>
                 <p className="mt-1 text-xs text-emerald-700">Livraison offerte dès {formatPrice(siteConfig.freeShippingThreshold)}</p>
               </div>
             </div>
           </div>
+          )}
         </div>
       </section>
 

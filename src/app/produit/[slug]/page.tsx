@@ -2,20 +2,18 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Check, ChevronRight, RotateCcw, Truck } from "lucide-react";
-import { categoryLabel, getProduct, products } from "@/lib/products";
+import { connection } from "next/server";
+import { categoryLabel } from "@/lib/products";
+import { getProduct, getProducts } from "@/lib/db";
 import { formatPrice, siteConfig } from "@/lib/config";
 import { ProductImage } from "@/components/product-image";
 import { ProductCard } from "@/components/product-card";
 import { Stars } from "@/components/stars";
 import { BuyBox } from "./buy-box";
 
-export function generateStaticParams() {
-  return products.map((p) => ({ slug: p.slug }));
-}
-
 export async function generateMetadata(props: PageProps<"/produit/[slug]">): Promise<Metadata> {
   const { slug } = await props.params;
-  const product = getProduct(slug);
+  const product = await getProduct(slug);
   if (!product) return {};
   return {
     title: product.name,
@@ -25,8 +23,10 @@ export async function generateMetadata(props: PageProps<"/produit/[slug]">): Pro
 }
 
 export default async function ProductPage(props: PageProps<"/produit/[slug]">) {
+  await connection();
   const { slug } = await props.params;
-  const product = getProduct(slug);
+  const products = await getProducts();
+  const product = products.find((p) => p.slug === slug);
   if (!product) notFound();
 
   const related = products.filter((p) => p.category === product.category && p.slug !== product.slug).slice(0, 4);
@@ -70,7 +70,7 @@ export default async function ProductPage(props: PageProps<"/produit/[slug]">) {
                 : "En stock, expédié sous 48 h"}
           </p>
 
-          <BuyBox slug={product.slug} stock={product.stock} />
+          <BuyBox product={product} />
 
           <ul className="mt-8 space-y-2 border-t border-stone-200 pt-8 text-sm">
             {product.details.map((d) => (

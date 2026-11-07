@@ -2,14 +2,15 @@
 
 import { ShoppingBag } from "lucide-react";
 import { useCart } from "./cart-provider";
+import type { Product } from "@/lib/products";
 
 export function AddToCartButton({
-  slug,
+  product,
   disabled,
   qty = 1,
   compact,
 }: {
-  slug: string;
+  product: Product;
   disabled?: boolean;
   qty?: number;
   compact?: boolean;
@@ -21,7 +22,7 @@ export function AddToCartButton({
       disabled={disabled}
       onClick={(e) => {
         e.preventDefault();
-        add(slug, qty);
+        add(product, qty);
       }}
       className={
         compact

@@ -1,11 +1,11 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { getProduct, type Product } from "@/lib/products";
+import type { Product } from "@/lib/products";
 import { shippingFor } from "@/lib/config";
 
-export type CartLine = { slug: string; qty: number };
-type CartItem = CartLine & { product: Product };
+export type CartLine = { slug: string; qty: number; product: Product };
+type CartItem = CartLine;
 
 type CartContextValue = {
   items: CartItem[];
@@ -17,7 +17,7 @@ type CartContextValue = {
   ready: boolean;
   open: () => void;
   close: () => void;
-  add: (slug: string, qty?: number) => void;
+  add: (product: Product, qty?: number) => void;
   setQty: (slug: string, qty: number) => void;
   remove: (slug: string) => void;
   clear: () => void;
@@ -35,7 +35,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (raw) setLines(JSON.parse(raw));
+      if (raw) setLines((JSON.parse(raw) as CartLine[]).filter((l) => l.product));
     } catch {}
     setReady(true);
   }, []);
@@ -47,27 +47,26 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     } catch {}
   }, [lines, ready]);
 
-  const add = useCallback((slug: string, qty = 1) => {
-    const product = getProduct(slug);
-    if (!product || product.stock === 0) return;
+  const add = useCallback((product: Product, qty = 1) => {
+    if (product.stock === 0) return;
+    const slug = product.slug;
     setLines((prev) => {
       const existing = prev.find((l) => l.slug === slug);
       if (existing) {
         return prev.map((l) =>
-          l.slug === slug ? { ...l, qty: Math.min(l.qty + qty, product.stock) } : l,
+          l.slug === slug ? { ...l, product, qty: Math.min(l.qty + qty, product.stock) } : l,
         );
       }
-      return [...prev, { slug, qty: Math.min(qty, product.stock) }];
+      return [...prev, { slug, product, qty: Math.min(qty, product.stock) }];
     });
     setIsOpen(true);
   }, []);
 
   const setQty = useCallback((slug: string, qty: number) => {
-    const product = getProduct(slug);
     setLines((prev) =>
       qty <= 0
         ? prev.filter((l) => l.slug !== slug)
-        : prev.map((l) => (l.slug === slug ? { ...l, qty: Math.min(qty, product?.stock ?? qty) } : l)),
+        : prev.map((l) => (l.slug === slug ? { ...l, qty: Math.min(qty, l.product.stock) } : l)),
     );
   }, []);
 
@@ -75,9 +74,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const clear = useCallback(() => setLines([]), []);
 
   const value = useMemo<CartContextValue>(() => {
-    const items = lines
-      .map((l) => ({ ...l, product: getProduct(l.slug) }))
-      .filter((i): i is CartItem => Boolean(i.product));
+    const items: CartItem[] = lines;
     const subtotal = items.reduce((s, i) => s + i.product.price * i.qty, 0);
     const shipping = shippingFor(subtotal);
     return {

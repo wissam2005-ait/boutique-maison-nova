@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search, SlidersHorizontal } from "lucide-react";
-import { categories, products, type Category } from "@/lib/products";
+import { categories, type Category, type Product } from "@/lib/products";
 import { ProductCard } from "@/components/product-card";
 
 const sorts = {
@@ -14,7 +14,7 @@ const sorts = {
 } as const;
 type Sort = keyof typeof sorts;
 
-export function ShopGrid() {
+export function ShopGrid({ products }: { products: Product[] }) {
   const params = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -43,7 +43,7 @@ export function ShopGrid() {
     if (sort === "prix-desc") sorted.sort((a, b) => b.price - a.price);
     if (sort === "note") sorted.sort((a, b) => b.rating - a.rating);
     return sorted;
-  }, [category, query, sort, inStock]);
+  }, [products, category, query, sort, inStock]);
 
   const chip = (active: boolean) =>
     `shrink-0 rounded-full border px-4 py-2 text-sm transition ${

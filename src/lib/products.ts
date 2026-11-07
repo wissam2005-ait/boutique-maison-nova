@@ -29,7 +29,7 @@ export const categories: { id: Category; label: string; emoji: string }[] = [
 
 const u = (id: string) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=900&q=80`;
 
-export const products: Product[] = [
+export const seedProducts: Product[] = [
   {
     slug: "casque-studio-sans-fil",
     name: "Casque Studio sans fil",
@@ -223,10 +223,6 @@ export const products: Product[] = [
     details: ["Cuir nappa", "Doublure cuir", "Semelle cousue Margom"],
   },
 ];
-
-export function getProduct(slug: string) {
-  return products.find((p) => p.slug === slug);
-}
 
 export function categoryLabel(id: Category) {
   return categories.find((c) => c.id === id)?.label ?? id;
