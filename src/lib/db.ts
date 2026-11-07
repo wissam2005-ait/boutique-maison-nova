@@ -24,13 +24,23 @@ export type Order = {
 
 type Backend = { read<T>(key: string): Promise<T | null>; write(key: string, value: unknown): Promise<void> };
 
+/**
+ * fetch d'origine (non intercepté par Next.js) et sans cache : sinon Next tente de
+ * mettre en cache les lectures Blobs pendant le rendu des pages, ce qui bloque sur Netlify.
+ */
+const rawFetch: typeof fetch = (input, init) => {
+  const base =
+    (globalThis as typeof globalThis & { _nextOriginalFetch?: typeof fetch })._nextOriginalFetch ?? globalThis.fetch;
+  return base(input, { ...init, cache: "no-store", signal: init?.signal ?? AbortSignal.timeout(8000) });
+};
+
 /** Netlify Blobs si le contexte Netlify est disponible (production), sinon null. */
 async function netlifyBackend(): Promise<Backend | null> {
   const { getStore } = await import("@netlify/blobs");
   let store: ReturnType<typeof getStore>;
   try {
     // Le contexte Blobs est injecté par Netlify à l'exécution (variable ou globalThis).
-    store = getStore({ name: "boutique", consistency: "strong" });
+    store = getStore({ name: "boutique", consistency: "strong", fetch: rawFetch });
   } catch {
     return null; // hors Netlify (développement local)
   }
