@@ -7,7 +7,7 @@ import { useCart } from "@/components/cart-provider";
 import { ProductImage } from "@/components/product-image";
 import { formatPrice } from "@/lib/config";
 import { promoRate } from "@/lib/promo";
-import { placeOrder, type OrderState } from "./actions";
+import { placeOrder, type OrderState } from "@/lib/order";
 
 function Field({
   name,

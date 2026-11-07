@@ -1,5 +1,3 @@
-"use server";
-
 import { getProduct } from "@/lib/products";
 import { shippingFor } from "@/lib/config";
 import { promoRate } from "@/lib/promo";
@@ -21,7 +19,6 @@ export async function placeOrder(_prev: OrderState, formData: FormData): Promise
   if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) fields.email = "E‑mail invalide";
   if (Object.keys(fields).length) return { status: "error", message: "Merci de corriger le formulaire.", fields };
 
-  // Les prix sont recalculés côté serveur : le client ne peut pas les modifier.
   let lines: { slug: string; qty: number }[] = [];
   try {
     lines = JSON.parse(data.cart);
@@ -39,35 +36,35 @@ export async function placeOrder(_prev: OrderState, formData: FormData): Promise
   const order = {
     orderId,
     createdAt: new Date().toISOString(),
-    customer: {
-      email: data.email,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      phone: data.phone,
-      address: `${data.address}, ${data.zip} ${data.city}, ${data.country}`,
-    },
-    payment: data.payment || "livraison",
-    items: items.map((i) => ({ name: i.product!.name, slug: i.product!.slug, qty: i.qty, price: i.product!.price })),
-    subtotal,
-    discount,
+    email: data.email,
+    nom: `${data.firstName} ${data.lastName}`,
+    telephone: data.phone,
+    adresse: `${data.address}, ${data.zip} ${data.city}, ${data.country}`,
+    paiement: data.payment || "livraison",
+    articles: items.map((i) => `${i.qty} × ${i.product!.name} (${i.product!.price} €)`).join(" | "),
+    sousTotal: subtotal,
+    reduction: discount,
     total,
   };
 
-  // Optionnel : recevez chaque commande par e‑mail / Discord / Google Sheets
-  // en définissant ORDER_WEBHOOK_URL (ex. Formspree, Make, Zapier, webhook Discord).
-  const webhook = process.env.ORDER_WEBHOOK_URL;
+  // Pour recevoir chaque commande par e‑mail gratuitement : créez un formulaire
+  // sur formspree.io et définissez NEXT_PUBLIC_ORDER_WEBHOOK_URL
+  // (ex. https://formspree.io/f/xxxxxxx) dans les variables d'environnement.
+  const webhook = process.env.NEXT_PUBLIC_ORDER_WEBHOOK_URL;
   if (webhook) {
     try {
-      await fetch(webhook, {
+      const res = await fetch(webhook, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify(order),
       });
-    } catch (e) {
-      console.error("Webhook commande échoué", e);
+      if (!res.ok) throw new Error(String(res.status));
+    } catch {
+      return { status: "error", message: "La commande n'a pas pu être envoyée. Réessayez dans un instant." };
     }
+  } else {
+    console.info("Commande (aucun NEXT_PUBLIC_ORDER_WEBHOOK_URL défini) :", order);
   }
-  console.log("Nouvelle commande", JSON.stringify(order));
 
   return { status: "success", orderId, total, email: data.email, firstName: data.firstName };
 }

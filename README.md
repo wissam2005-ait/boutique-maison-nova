@@ -33,10 +33,10 @@ Pour vos propres photos : placez-les dans `public/produits/` et indiquez `image:
 
 ## Recevoir les commandes
 
-Chaque commande est écrite dans les logs du serveur. Pour la recevoir **par e‑mail gratuitement**, créez un formulaire sur [formspree.io](https://formspree.io), puis ajoutez la variable d'environnement :
+Le site est 100 % statique (dossier `out/`). Pour recevoir chaque commande **par e‑mail gratuitement**, créez un formulaire sur [formspree.io](https://formspree.io), puis ajoutez la variable d'environnement :
 
 ```
-ORDER_WEBHOOK_URL=https://formspree.io/f/xxxxxxx
+NEXT_PUBLIC_ORDER_WEBHOOK_URL=https://formspree.io/f/xxxxxxx
 ```
 
 Ça marche aussi avec une URL de webhook Discord, Make ou Zapier (Google Sheets).
@@ -45,7 +45,7 @@ ORDER_WEBHOOK_URL=https://formspree.io/f/xxxxxxx
 
 1. Poussez ce dossier sur un dépôt GitHub.
 2. Sur [vercel.com/new](https://vercel.com/new), importez le dépôt, puis cliquez sur **Deploy** (aucune configuration nécessaire).
-3. (Optionnel) Ajoutez `ORDER_WEBHOOK_URL` dans *Settings → Environment Variables*.
+3. (Optionnel) Ajoutez `NEXT_PUBLIC_ORDER_WEBHOOK_URL` dans *Settings → Environment Variables*.
 
 Netlify et Cloudflare Pages fonctionnent aussi.
 
