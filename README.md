@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Maison Nova — boutique e‑commerce
 
-## Getting Started
+Boutique en ligne moderne construite avec **Next.js 16 (App Router, React 19, Server Actions)**, **Tailwind CSS 4** et **TypeScript**. Déployable gratuitement sur Vercel en 2 minutes.
 
-First, run the development server:
+## Fonctionnalités
+
+- Page d'accueil avec hero, catégories, coups de cœur, newsletter (code promo) et avis clients
+- Boutique avec filtres par catégorie, recherche, tri et filtre « en stock »
+- Fiches produit pré-générées en statique (SEO + Open Graph) avec sélection de quantité et produits associés
+- Panier latéral animé + page panier, sauvegardé dans le navigateur, avec barre de progression vers la livraison offerte
+- Tunnel de commande : validation, code promo `BIENVENUE10`, **prix recalculés côté serveur** (impossible de les modifier depuis le navigateur)
+- Pages À propos, Contact et 404, responsive mobile, accessible
+
+## Démarrer en local
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Ouvrez http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Personnaliser
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Quoi | Fichier |
+|---|---|
+| Nom, devise, seuil de livraison offerte, e‑mail | `src/lib/config.ts` |
+| Produits et catégories | `src/lib/products.ts` |
+| Codes promo | `src/lib/promo.ts` |
+| Couleurs et polices | `src/app/globals.css`, `src/app/layout.tsx` |
 
-## Learn More
+Pour vos propres photos : placez-les dans `public/produits/` et indiquez `image: "/produits/mon-image.jpg"`.
 
-To learn more about Next.js, take a look at the following resources:
+## Recevoir les commandes
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Chaque commande est écrite dans les logs du serveur. Pour la recevoir **par e‑mail gratuitement**, créez un formulaire sur [formspree.io](https://formspree.io), puis ajoutez la variable d'environnement :
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+ORDER_WEBHOOK_URL=https://formspree.io/f/xxxxxxx
+```
 
-## Deploy on Vercel
+Ça marche aussi avec une URL de webhook Discord, Make ou Zapier (Google Sheets).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Déployer gratuitement sur Vercel
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Poussez ce dossier sur un dépôt GitHub.
+2. Sur [vercel.com/new](https://vercel.com/new), importez le dépôt, puis cliquez sur **Deploy** (aucune configuration nécessaire).
+3. (Optionnel) Ajoutez `ORDER_WEBHOOK_URL` dans *Settings → Environment Variables*.
+
+Netlify et Cloudflare Pages fonctionnent aussi.
+
+## Pistes suivantes
+
+- Paiement par carte : Stripe Checkout
+- Base de données des commandes et produits : Neon Postgres ou Supabase (offres gratuites)
+- Back-office : Sanity ou Payload CMS
